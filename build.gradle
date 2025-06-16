@@ -1,0 +1,134 @@
+plugins {
+    id 'org.springframework.boot' version '3.2.1'
+    id 'io.spring.dependency-management' version '1.1.4'
+    id 'java'
+}
+
+group = 'com.empverify'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = '17'
+}
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven {
+        name = 'Hyperledger Fabric'
+        url = 'https://hyperledger.jfrog.io/hyperledger/fabric-maven'
+    }
+}
+
+ext {
+    fabricGatewayVersion = '2.2.9'
+    fabricSdkJavaVersion = '2.2.22'
+    springdocVersion = '2.3.0'
+}
+
+dependencies {
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Configuration Processing
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    // Hyperledger Fabric Dependencies
+    implementation "org.hyperledger.fabric:fabric-gateway:${fabricGatewayVersion}"
+    implementation "org.hyperledger.fabric:fabric-sdk-java:${fabricSdkJavaVersion}"
+
+    // JSON Processing
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
+
+    // Documentation
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
+
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+// Custom tasks for different environments
+task runLocal(type: JavaExec) {
+    group = 'application'
+    description = 'Run the application with local profile'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.empverify.EmpVerifyBlockchainApiApplication'
+    systemProperty 'spring.profiles.active', 'local'
+    systemProperty 'fabric.network.base-path', '/Users/mac/Desktop/fabric-samples/test-network'
+}
+
+task runEc2(type: JavaExec) {
+    group = 'application'
+    description = 'Run the application with EC2 profile'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.empverify.EmpVerifyBlockchainApiApplication'
+    systemProperty 'spring.profiles.active', 'ec2'
+    systemProperty 'fabric.network.base-path', '/opt/empverify/fabric-samples/test-network'
+}
+
+task runDocker(type: JavaExec) {
+    group = 'application'
+    description = 'Run the application with Docker profile'
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'com.empverify.EmpVerifyBlockchainApiApplication'
+    systemProperty 'spring.profiles.active', 'docker'
+    systemProperty 'fabric.network.base-path', '/fabric-network'
+}
+
+// Build info
+jar {
+    enabled = false
+    archiveClassifier = ''
+}
+
+bootJar {
+    archiveFileName = 'empverify-blockchain-api.jar'
+    manifest {
+        attributes(
+                'Implementation-Title': project.name,
+                'Implementation-Version': project.version,
+                'Built-By': System.getProperty('user.name'),
+                'Built-Date': new Date(),
+                'Built-JDK': System.getProperty('java.version'),
+                'Built-Gradle': gradle.gradleVersion
+        )
+    }
+}
+
+// Development configuration
+if (project.hasProperty('devtools')) {
+    dependencies {
+        developmentOnly 'org.springframework.boot:spring-boot-devtools'
+    }
+}
+
+// JVM arguments for development
+bootRun {
+    jvmArgs = [
+            '-Xmx512m',
+            '-Xms256m',
+            '-Dspring.profiles.active=local'
+    ]
+
+    if (project.hasProperty('debug')) {
+        jvmArgs += [
+                '-Xdebug',
+                '-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005'
+        ]
+    }
+}
