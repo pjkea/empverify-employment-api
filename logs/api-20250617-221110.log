@@ -1,0 +1,206 @@
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.1)
+
+2025-06-17 22:11:13 - Starting EmpVerifyBlockchainApiApplication using Java 21.0.7 with PID 2829 (/Users/mac/Downloads/empverify-blockchain-api/build/libs/empverify-blockchain-api.jar started by mac in /Users/mac/Downloads/empverify-blockchain-api)
+2025-06-17 22:11:13 - Running with Spring Boot v3.2.1, Spring v6.1.2
+2025-06-17 22:11:13 - The following 1 profile is active: "local"
+2025-06-17 22:11:19 - Tomcat initialized with port 8080 (http)
+2025-06-17 22:11:19 - Starting service [Tomcat]
+2025-06-17 22:11:19 - Starting Servlet engine: [Apache Tomcat/10.1.17]
+2025-06-17 22:11:19 - Initializing Spring embedded WebApplicationContext
+2025-06-17 22:11:19 - Root WebApplicationContext: initialization completed in 5768 ms
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+2025-06-17 22:11:20 - Initializing Fabric Gateway with base path: /Users/mac/Desktop/fabric-samples/test-network
+2025-06-17 22:11:20 - Identity appUser already exists in wallet
+2025-06-17 22:11:20 - Failed to load any configuration from: config.properties. Using toolkit defaults
+2025-06-17 22:11:22 - Unable to load channel configuration from connection profile: Channel configuration has no channels defined.
+2025-06-17 22:11:27 - Channel Channel{id: 1, name: employeechannel} Sending proposal with transaction: d59bf9dccb5bb811fb122537722617822ff71fc5e14e24e0e354067193a569ed to Peer{ id: 2, name: peer0.org1.agregartech.com, channelName: employeechannel, url: grpcs://localhost:7051, mspid: Org1MSP} failed because of: gRPC failure=Status{code=UNKNOWN, description=error validating proposal: access denied: channel [employeechannel] creator org unknown, creator is malformed, cause=null}
+java.lang.Exception: io.grpc.StatusRuntimeException: UNKNOWN: error validating proposal: access denied: channel [employeechannel] creator org unknown, creator is malformed
+	at org.hyperledger.fabric.sdk.Channel.sendProposalToPeers(Channel.java:4945)
+	at org.hyperledger.fabric.sdk.Channel.sendProposalToPeers(Channel.java:4848)
+	at org.hyperledger.fabric.sdk.Channel.getConfigBlock(Channel.java:941)
+	at org.hyperledger.fabric.sdk.Channel.getConfigBlock(Channel.java:907)
+	at org.hyperledger.fabric.sdk.Channel.parseConfigBlock(Channel.java:1964)
+	at org.hyperledger.fabric.sdk.Channel.loadCACertificates(Channel.java:1801)
+	at org.hyperledger.fabric.sdk.Channel.initialize(Channel.java:1222)
+	at org.hyperledger.fabric.gateway.impl.NetworkImpl.initializeChannel(NetworkImpl.java:59)
+	at org.hyperledger.fabric.gateway.impl.NetworkImpl.<init>(NetworkImpl.java:50)
+	at org.hyperledger.fabric.gateway.impl.GatewayImpl.getNetwork(GatewayImpl.java:263)
+	at com.empverify.service.FabricGatewayService.initializeGateway(FabricGatewayService.java:60)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleMethod.invoke(InitDestroyAnnotationBeanPostProcessor.java:457)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleMetadata.invokeInitMethods(InitDestroyAnnotationBeanPostProcessor.java:401)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization(InitDestroyAnnotationBeanPostProcessor.java:219)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:421)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1765)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:599)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:521)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:325)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:323)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1443)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1353)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:911)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:789)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:241)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1354)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1191)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:561)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:521)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:325)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:323)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1443)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1353)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:911)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:789)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:241)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1354)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1191)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:561)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:521)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:325)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:323)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:975)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:960)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:625)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:762)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:464)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:334)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1358)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1347)
+	at com.empverify.EmpVerifyBlockchainApiApplication.main(EmpVerifyBlockchainApiApplication.java:12)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:91)
+	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:53)
+	at org.springframework.boot.loader.launch.JarLauncher.main(JarLauncher.java:58)
+Caused by: io.grpc.StatusRuntimeException: UNKNOWN: error validating proposal: access denied: channel [employeechannel] creator org unknown, creator is malformed
+	at io.grpc.Status.asRuntimeException(Status.java:533)
+	at io.grpc.stub.ClientCalls$UnaryStreamToFuture.onClose(ClientCalls.java:538)
+	at io.opentelemetry.instrumentation.grpc.v1_6.TracingClientInterceptor$TracingClientCall$TracingClientCallListener.onClose(TracingClientInterceptor.java:159)
+	at io.grpc.internal.DelayedClientCall$DelayedListener$3.run(DelayedClientCall.java:489)
+	at io.grpc.internal.DelayedClientCall$DelayedListener.delayOrExecute(DelayedClientCall.java:453)
+	at io.grpc.internal.DelayedClientCall$DelayedListener.onClose(DelayedClientCall.java:486)
+	at io.grpc.internal.ClientCallImpl.closeObserver(ClientCallImpl.java:574)
+	at io.grpc.internal.ClientCallImpl.access$300(ClientCallImpl.java:72)
+	at io.grpc.internal.ClientCallImpl$ClientStreamListenerImpl$1StreamClosed.runInternal(ClientCallImpl.java:742)
+	at io.grpc.internal.ClientCallImpl$ClientStreamListenerImpl$1StreamClosed.runInContext(ClientCallImpl.java:723)
+	at io.grpc.internal.ContextRunnable.run(ContextRunnable.java:37)
+	at io.grpc.internal.SerializingExecutor.run(SerializingExecutor.java:133)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1144)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:642)
+	at java.base/java.lang.Thread.run(Thread.java:1583)
+2025-06-17 22:11:27 - getConfigBlock for channel employeechannel failed with peer peer0.org1.agregartech.com.  Status FAILURE, details: Channel Channel{id: 1, name: employeechannel} Sending proposal with transaction: d59bf9dccb5bb811fb122537722617822ff71fc5e14e24e0e354067193a569ed to Peer{ id: 2, name: peer0.org1.agregartech.com, channelName: employeechannel, url: grpcs://localhost:7051, mspid: Org1MSP} failed because of: gRPC failure=Status{code=UNKNOWN, description=error validating proposal: access denied: channel [employeechannel] creator org unknown, creator is malformed, cause=null}
+2025-06-17 22:11:27 - getConfigBlock for channel employeechannel failed with peer peer0.org1.agregartech.com.  Status FAILURE, details: Channel Channel{id: 1, name: employeechannel} Sending proposal with transaction: d59bf9dccb5bb811fb122537722617822ff71fc5e14e24e0e354067193a569ed to Peer{ id: 2, name: peer0.org1.agregartech.com, channelName: employeechannel, url: grpcs://localhost:7051, mspid: Org1MSP} failed because of: gRPC failure=Status{code=UNKNOWN, description=error validating proposal: access denied: channel [employeechannel] creator org unknown, creator is malformed, cause=null}
+org.hyperledger.fabric.sdk.exception.ProposalException: getConfigBlock for channel employeechannel failed with peer peer0.org1.agregartech.com.  Status FAILURE, details: Channel Channel{id: 1, name: employeechannel} Sending proposal with transaction: d59bf9dccb5bb811fb122537722617822ff71fc5e14e24e0e354067193a569ed to Peer{ id: 2, name: peer0.org1.agregartech.com, channelName: employeechannel, url: grpcs://localhost:7051, mspid: Org1MSP} failed because of: gRPC failure=Status{code=UNKNOWN, description=error validating proposal: access denied: channel [employeechannel] creator org unknown, creator is malformed, cause=null}
+	at org.hyperledger.fabric.sdk.Channel.getConfigBlock(Channel.java:952)
+	at org.hyperledger.fabric.sdk.Channel.getConfigBlock(Channel.java:907)
+	at org.hyperledger.fabric.sdk.Channel.parseConfigBlock(Channel.java:1964)
+	at org.hyperledger.fabric.sdk.Channel.loadCACertificates(Channel.java:1801)
+	at org.hyperledger.fabric.sdk.Channel.initialize(Channel.java:1222)
+	at org.hyperledger.fabric.gateway.impl.NetworkImpl.initializeChannel(NetworkImpl.java:59)
+	at org.hyperledger.fabric.gateway.impl.NetworkImpl.<init>(NetworkImpl.java:50)
+	at org.hyperledger.fabric.gateway.impl.GatewayImpl.getNetwork(GatewayImpl.java:263)
+	at com.empverify.service.FabricGatewayService.initializeGateway(FabricGatewayService.java:60)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleMethod.invoke(InitDestroyAnnotationBeanPostProcessor.java:457)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor$LifecycleMetadata.invokeInitMethods(InitDestroyAnnotationBeanPostProcessor.java:401)
+	at org.springframework.beans.factory.annotation.InitDestroyAnnotationBeanPostProcessor.postProcessBeforeInitialization(InitDestroyAnnotationBeanPostProcessor.java:219)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.applyBeanPostProcessorsBeforeInitialization(AbstractAutowireCapableBeanFactory.java:421)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.initializeBean(AbstractAutowireCapableBeanFactory.java:1765)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:599)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:521)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:325)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:323)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1443)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1353)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:911)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:789)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:241)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1354)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1191)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:561)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:521)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:325)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:323)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.config.DependencyDescriptor.resolveCandidate(DependencyDescriptor.java:254)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.doResolveDependency(DefaultListableBeanFactory.java:1443)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.resolveDependency(DefaultListableBeanFactory.java:1353)
+	at org.springframework.beans.factory.support.ConstructorResolver.resolveAutowiredArgument(ConstructorResolver.java:911)
+	at org.springframework.beans.factory.support.ConstructorResolver.createArgumentArray(ConstructorResolver.java:789)
+	at org.springframework.beans.factory.support.ConstructorResolver.autowireConstructor(ConstructorResolver.java:241)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.autowireConstructor(AbstractAutowireCapableBeanFactory.java:1354)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBeanInstance(AbstractAutowireCapableBeanFactory.java:1191)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.doCreateBean(AbstractAutowireCapableBeanFactory.java:561)
+	at org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory.createBean(AbstractAutowireCapableBeanFactory.java:521)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.lambda$doGetBean$0(AbstractBeanFactory.java:325)
+	at org.springframework.beans.factory.support.DefaultSingletonBeanRegistry.getSingleton(DefaultSingletonBeanRegistry.java:234)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.doGetBean(AbstractBeanFactory.java:323)
+	at org.springframework.beans.factory.support.AbstractBeanFactory.getBean(AbstractBeanFactory.java:199)
+	at org.springframework.beans.factory.support.DefaultListableBeanFactory.preInstantiateSingletons(DefaultListableBeanFactory.java:975)
+	at org.springframework.context.support.AbstractApplicationContext.finishBeanFactoryInitialization(AbstractApplicationContext.java:960)
+	at org.springframework.context.support.AbstractApplicationContext.refresh(AbstractApplicationContext.java:625)
+	at org.springframework.boot.web.servlet.context.ServletWebServerApplicationContext.refresh(ServletWebServerApplicationContext.java:146)
+	at org.springframework.boot.SpringApplication.refresh(SpringApplication.java:762)
+	at org.springframework.boot.SpringApplication.refreshContext(SpringApplication.java:464)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:334)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1358)
+	at org.springframework.boot.SpringApplication.run(SpringApplication.java:1347)
+	at com.empverify.EmpVerifyBlockchainApiApplication.main(EmpVerifyBlockchainApiApplication.java:12)
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:103)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:580)
+	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:91)
+	at org.springframework.boot.loader.launch.Launcher.launch(Launcher.java:53)
+	at org.springframework.boot.loader.launch.JarLauncher.main(JarLauncher.java:58)
+2025-06-17 22:11:27 - Channel employeechannel could not load peer CA certificates from any peers.
+2025-06-17 22:11:27 - Channel employeechannel doing discovery with peer: Peer{ id: 2, name: peer0.org1.agregartech.com, channelName: employeechannel, url: grpcs://localhost:7051, mspid: Org1MSP}
+2025-06-17 22:11:27 - Channel employeechannel peer: Peer{ id: 2, name: peer0.org1.agregartech.com, channelName: employeechannel, url: grpcs://localhost:7051, mspid: Org1MSP} error during service discovery access denied
+2025-06-17 22:11:28 - PeerEventServiceClient{id: 5, channel: employeechannel, peerName: peer0.org1.agregartech.com, url: grpcs://localhost:7051} PeerEventServiceClient{id: 5, channel: employeechannel, peerName: peer0.org1.agregartech.com, url: grpcs://localhost:7051} attempts 0 Status returned failure code 403 (FORBIDDEN) during peer service event registration
+2025-06-17 22:11:28 - Channel Channel{id: 1, name: employeechannel} eventThread started shutdown: false  thread: null 
+2025-06-17 22:11:28 - Successfully initialized Fabric Gateway for channel: employeechannel and contract: employment-records
+2025-06-17 22:11:28 - 
+
+Using generated security password: 36a4dae9-59f8-4346-aad4-4b8d46dd6953
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-06-17 22:11:29 - Exposing 3 endpoint(s) beneath base path '/actuator'
+2025-06-17 22:11:29 - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@5afa0b1a, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@3d9cba2, org.springframework.security.web.context.SecurityContextHolderFilter@7833407, org.springframework.security.web.header.HeaderWriterFilter@594fcb22, org.springframework.web.filter.CorsFilter@6c167296, org.springframework.security.web.authentication.logout.LogoutFilter@8aafd70, com.empverify.security.ApiKeyAuthenticationFilter@506e382b, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@60739eca, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@9ba167e, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@5a464be7, org.springframework.security.web.session.SessionManagementFilter@b0d4873, org.springframework.security.web.access.ExceptionTranslationFilter@5570ee6d, org.springframework.security.web.access.intercept.AuthorizationFilter@59700156]
+2025-06-17 22:11:30 - Tomcat started on port 8080 (http) with context path '/api/v1'
+2025-06-17 22:11:30 - Started EmpVerifyBlockchainApiApplication in 17.775 seconds (process running for 19.628)
+2025-06-17 22:11:31 - AutoConfiguredOpenTelemetrySdk found on classpath but automatic configuration is disabled. To enable, run your JVM with -Dotel.java.global-autoconfigure.enabled=true
+2025-06-17 22:11:32 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:11:37 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:11:39 - PeerEventServiceClient{id: 15, channel: employeechannel, peerName: peer0.org1.agregartech.com, url: grpcs://localhost:7051} PeerEventServiceClient{id: 15, channel: employeechannel, peerName: peer0.org1.agregartech.com, url: grpcs://localhost:7051} attempts 10 Status returned failure code 403 (FORBIDDEN) during peer service event registration
+2025-06-17 22:11:42 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:11:47 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:11:52 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:11:57 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:12:00 - PeerEventServiceClient{id: 25, channel: employeechannel, peerName: peer0.org1.agregartech.com, url: grpcs://localhost:7051} PeerEventServiceClient{id: 25, channel: employeechannel, peerName: peer0.org1.agregartech.com, url: grpcs://localhost:7051} attempts 20 Status returned failure code 403 (FORBIDDEN) during peer service event registration
+2025-06-17 22:12:02 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:12:07 - Too many log messages detected. Will only log once per minute from now on.
+2025-06-17 22:12:07 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:12:21 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:12:22 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317

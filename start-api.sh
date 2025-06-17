@@ -140,8 +140,8 @@ if [[ "$ENVIRONMENT" != "docker" ]]; then
     # Check for required Fabric network files
     REQUIRED_FILES=(
         "organizations/peerOrganizations/org1.agregartech.com/connection-org1.yaml"
-        "organizations/peerOrganizations/org1.agregartech.com/users/User1@org1.example.com/msp/signcerts/cert.pem"
-        "organizations/peerOrganizations/org1.agregartech.com/users/User1@org1.example.com/msp/keystore"
+        "organizations/peerOrganizations/org1.agregartech.com/users/User1@org1.agregartech.com/msp/signcerts/cert.pem"
+        "organizations/peerOrganizations/org1.agregartech.com/users/User1@org1.agregartech.com/msp/keystore"
     )
 
     for file in "${REQUIRED_FILES[@]}"; do

@@ -8,7 +8,7 @@ group = 'com.empverify'
 version = '1.0.0'
 
 java {
-    sourceCompatibility = '17'
+    sourceCompatibility = '21'
 }
 
 configurations {
@@ -19,16 +19,21 @@ configurations {
 
 repositories {
     mavenCentral()
+    mavenLocal()
     maven {
         name = 'Hyperledger Fabric'
         url = 'https://hyperledger.jfrog.io/hyperledger/fabric-maven'
     }
+    maven {
+        url 'https://jitpack.io'
+    }
 }
 
 ext {
-    fabricGatewayVersion = '2.2.9'
-    fabricSdkJavaVersion = '2.2.22'
+    set('fabricGatewayVersion', '2.2.9')
+    set('grpcVersion', '1.69.0')
     springdocVersion = '2.3.0'
+    set('lombokVersion', '1.18.30')
 }
 
 dependencies {
@@ -42,8 +47,7 @@ dependencies {
     annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
 
     // Hyperledger Fabric Dependencies
-    implementation "org.hyperledger.fabric:fabric-gateway:${fabricGatewayVersion}"
-    implementation "org.hyperledger.fabric:fabric-sdk-java:${fabricSdkJavaVersion}"
+    implementation "org.hyperledger.fabric:fabric-gateway-java:${fabricGatewayVersion}"
 
     // JSON Processing
     implementation 'com.fasterxml.jackson.core:jackson-databind'
@@ -63,7 +67,7 @@ tasks.named('test') {
 }
 
 // Custom tasks for different environments
-task runLocal(type: JavaExec) {
+tasks.register('runLocal', JavaExec) {
     group = 'application'
     description = 'Run the application with local profile'
     classpath = sourceSets.main.runtimeClasspath
@@ -72,7 +76,7 @@ task runLocal(type: JavaExec) {
     systemProperty 'fabric.network.base-path', '/Users/mac/Desktop/fabric-samples/test-network'
 }
 
-task runEc2(type: JavaExec) {
+tasks.register('runEc2', JavaExec) {
     group = 'application'
     description = 'Run the application with EC2 profile'
     classpath = sourceSets.main.runtimeClasspath
@@ -81,7 +85,7 @@ task runEc2(type: JavaExec) {
     systemProperty 'fabric.network.base-path', '/opt/empverify/fabric-samples/test-network'
 }
 
-task runDocker(type: JavaExec) {
+tasks.register('runDocker', JavaExec) {
     group = 'application'
     description = 'Run the application with Docker profile'
     classpath = sourceSets.main.runtimeClasspath

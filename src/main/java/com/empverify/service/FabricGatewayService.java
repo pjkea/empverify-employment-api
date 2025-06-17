@@ -109,10 +109,11 @@ public class FabricGatewayService {
         // Handle directory with multiple key files
         if (Files.isDirectory(privateKeyPath)) {
             try {
+                final Path searchPath = privateKeyPath;
                 privateKeyPath = Files.list(privateKeyPath)
                         .filter(path -> path.toString().endsWith("_sk"))
                         .findFirst()
-                        .orElseThrow(() -> new BlockchainException("No private key file found in directory: " + privateKeyPath));
+                        .orElseThrow(() -> new BlockchainException("No private key file found in directory: " + searchPath));
             } catch (IOException e) {
                 throw new BlockchainException("Error reading private key directory: " + privateKeyPath, e);
             }

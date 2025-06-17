@@ -1,0 +1,61 @@
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+ :: Spring Boot ::                (v3.2.1)
+
+2025-06-17 22:41:40 - Starting EmpVerifyBlockchainApiApplication using Java 21.0.7 with PID 4424 (/Users/mac/Downloads/empverify-blockchain-api/build/libs/empverify-blockchain-api.jar started by mac in /Users/mac/Downloads/empverify-blockchain-api)
+2025-06-17 22:41:40 - Running with Spring Boot v3.2.1, Spring v6.1.2
+2025-06-17 22:41:40 - The following 1 profile is active: "local"
+2025-06-17 22:41:45 - Tomcat initialized with port 8080 (http)
+2025-06-17 22:41:45 - Starting service [Tomcat]
+2025-06-17 22:41:45 - Starting Servlet engine: [Apache Tomcat/10.1.17]
+2025-06-17 22:41:45 - Initializing Spring embedded WebApplicationContext
+2025-06-17 22:41:45 - Root WebApplicationContext: initialization completed in 4441 ms
+Standard Commons Logging discovery in action with spring-jcl: please remove commons-logging.jar from classpath in order to avoid potential conflicts
+2025-06-17 22:41:46 - Initializing Fabric Gateway with base path: /Users/mac/Desktop/fabric-samples/test-network
+2025-06-17 22:41:46 - Created and stored identity appUser in wallet
+2025-06-17 22:41:46 - Failed to load any configuration from: config.properties. Using toolkit defaults
+2025-06-17 22:41:47 - Unable to load channel configuration from connection profile: Channel configuration has no channels defined.
+2025-06-17 22:41:50 - Channel employeechannel doing discovery with peer: Peer{ id: 2, name: peer0.org1.agregartech.com, channelName: employeechannel, url: grpcs://localhost:7051, mspid: Org1MSP}
+2025-06-17 22:41:52 - Channel Channel{id: 1, name: employeechannel} eventThread started shutdown: false  thread: null 
+2025-06-17 22:41:52 - Successfully initialized Fabric Gateway for channel: employeechannel and contract: employment-records
+2025-06-17 22:41:52 - AutoConfiguredOpenTelemetrySdk found on classpath but automatic configuration is disabled. To enable, run your JVM with -Dotel.java.global-autoconfigure.enabled=true
+2025-06-17 22:41:52 - 
+
+Using generated security password: d76bbbb5-a34f-4925-b607-62ad7e20b22c
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-06-17 22:41:52 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:41:52 - Exposing 3 endpoint(s) beneath base path '/actuator'
+2025-06-17 22:41:53 - Will secure any request with [org.springframework.security.web.session.DisableEncodeUrlFilter@5d56c2d2, org.springframework.security.web.context.request.async.WebAsyncManagerIntegrationFilter@4a249610, org.springframework.security.web.context.SecurityContextHolderFilter@6e111aeb, org.springframework.security.web.header.HeaderWriterFilter@363a09a2, org.springframework.web.filter.CorsFilter@ebbbe20, org.springframework.security.web.authentication.logout.LogoutFilter@43c3354, com.empverify.security.ApiKeyAuthenticationFilter@279e85eb, org.springframework.security.web.savedrequest.RequestCacheAwareFilter@46ab8e4b, org.springframework.security.web.servletapi.SecurityContextHolderAwareRequestFilter@66428512, org.springframework.security.web.authentication.AnonymousAuthenticationFilter@4cb59398, org.springframework.security.web.session.SessionManagementFilter@5f3c866c, org.springframework.security.web.access.ExceptionTranslationFilter@260ccf0, org.springframework.security.web.access.intercept.AuthorizationFilter@2eb73a42]
+2025-06-17 22:41:53 - Tomcat started on port 8080 (http) with context path '/api/v1'
+2025-06-17 22:41:53 - Started EmpVerifyBlockchainApiApplication in 13.777 seconds (process running for 15.033)
+2025-06-17 22:42:47 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:43:35 - Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-06-17 22:43:35 - Initializing Servlet 'dispatcherServlet'
+2025-06-17 22:43:35 - Completed initialization in 46 ms
+2025-06-17 22:43:47 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:43:51 - Channel employeechannel doing discovery with peer: Peer{ id: 7, name: peer0.org2.agregartech.com:9051, channelName: employeechannel, url: grpcs://peer0.org2.agregartech.com:9051, mspid: Org2MSP}
+2025-06-17 22:43:52 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:44:47 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:45:47 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:45:51 - Channel employeechannel doing discovery with peer: Peer{ id: 7, name: peer0.org2.agregartech.com:9051, channelName: employeechannel, url: grpcs://peer0.org2.agregartech.com:9051, mspid: Org2MSP}
+2025-06-17 22:45:52 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:46:47 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:47:47 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:47:51 - Channel employeechannel doing discovery with peer: Peer{ id: 7, name: peer0.org2.agregartech.com:9051, channelName: employeechannel, url: grpcs://peer0.org2.agregartech.com:9051, mspid: Org2MSP}
+2025-06-17 22:47:52 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:48:47 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:49:47 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:49:51 - Channel employeechannel doing discovery with peer: Peer{ id: 2, name: peer0.org1.agregartech.com, channelName: employeechannel, url: grpcs://localhost:7051, mspid: Org1MSP}
+2025-06-17 22:49:52 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:50:47 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:51:47 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 22:51:51 - Channel employeechannel doing discovery with peer: Peer{ id: 7, name: peer0.org2.agregartech.com:9051, channelName: employeechannel, url: grpcs://peer0.org2.agregartech.com:9051, mspid: Org2MSP}
+2025-06-17 22:51:53 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
