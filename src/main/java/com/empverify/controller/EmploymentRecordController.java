@@ -16,6 +16,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/employment-records")
 @Tag(name = "Employment Records", description = "Employment Record Management API")
@@ -48,10 +50,12 @@ public class EmploymentRecordController {
     }
 
     @PostMapping
-    @Operation(summary = "Create Employment Record", description = "Create a new employment record")
+    @Operation(summary = "Create Employment Record",
+            description = "Create a new employment record with automatic duplicate detection")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Employment record created successfully"),
-            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data or duplicate record detected"),
+            @ApiResponse(responseCode = "409", description = "Duplicate record exists"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<BlockchainResponse<String>> createEmploymentRecord(
@@ -60,6 +64,12 @@ public class EmploymentRecordController {
         logger.info("Request to create employment record for employer: {}", request.getEmployerId());
 
         BlockchainResponse<String> response = employmentRecordService.createEmploymentRecord(request);
+
+        // Handle duplicate detection responses
+        if (!response.isSuccess() && response.getError() != null &&
+                response.getError().contains("Duplicate record detected")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
 
         return response.isSuccess() ?
                 ResponseEntity.status(HttpStatus.CREATED).body(response) :
@@ -101,11 +111,13 @@ public class EmploymentRecordController {
     }
 
     @PutMapping("/{employeeId}")
-    @Operation(summary = "Update Employment Record", description = "Update an existing employment record")
+    @Operation(summary = "Update Employment Record",
+            description = "Update an existing employment record with duplicate detection")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Employment record updated successfully"),
             @ApiResponse(responseCode = "400", description = "Invalid request data"),
             @ApiResponse(responseCode = "404", description = "Employment record not found"),
+            @ApiResponse(responseCode = "409", description = "Update would create duplicate record"),
             @ApiResponse(responseCode = "500", description = "Internal server error")
     })
     public ResponseEntity<BlockchainResponse<String>> updateEmploymentRecord(
@@ -115,6 +127,12 @@ public class EmploymentRecordController {
         logger.info("Request to update employment record for employee ID: {}", employeeId);
 
         BlockchainResponse<String> response = employmentRecordService.updateEmploymentRecord(employeeId, request);
+
+        // Handle duplicate detection responses
+        if (!response.isSuccess() && response.getError() != null &&
+                response.getError().contains("duplicate record detected")) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        }
 
         return response.isSuccess() ?
                 ResponseEntity.ok(response) :
@@ -175,6 +193,46 @@ public class EmploymentRecordController {
         logger.info("Request to retrieve employment record history for employee ID: {}", employeeId);
 
         BlockchainResponse<EmploymentRecordHistoryDto> response = employmentRecordService.getEmploymentRecordHistory(employeeId);
+
+        return response.isSuccess() ?
+                ResponseEntity.ok(response) :
+                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    // NEW ENDPOINTS FOR DUPLICATE PREVENTION
+
+    @PostMapping("/check-duplicates")
+    @Operation(summary = "Check for Duplicates",
+            description = "Check if a potential employment record would be a duplicate")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Duplicate check completed"),
+            @ApiResponse(responseCode = "400", description = "Invalid request data"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<BlockchainResponse<DuplicateCheckDto>> checkForDuplicates(
+            @Valid @RequestBody DuplicateCheckRequest request) {
+
+        logger.info("Request to check for duplicates: employee='{}', employer='{}'",
+                request.getEmployeeName().getFullName(), request.getEmployerId());
+
+        BlockchainResponse<DuplicateCheckDto> response = employmentRecordService.checkForDuplicates(request);
+
+        return response.isSuccess() ?
+                ResponseEntity.ok(response) :
+                ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+    }
+
+    @GetMapping("/system/duplicate-prevention")
+    @Operation(summary = "Get Duplicate Prevention Configuration",
+            description = "Retrieve the current duplicate prevention settings")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Configuration retrieved successfully"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<BlockchainResponse<Map<String, Object>>> getDuplicatePreventionConfig() {
+        logger.info("Request to retrieve duplicate prevention configuration");
+
+        BlockchainResponse<Map<String, Object>> response = employmentRecordService.getDuplicatePreventionConfig();
 
         return response.isSuccess() ?
                 ResponseEntity.ok(response) :

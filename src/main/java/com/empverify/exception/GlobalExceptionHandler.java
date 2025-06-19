@@ -1,6 +1,7 @@
 package com.empverify.exception;
 
 import com.empverify.dto.BlockchainResponse;
+import com.empverify.dto.DuplicateCheckDto;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -25,6 +26,17 @@ public class GlobalExceptionHandler {
 
         BlockchainResponse<String> response = BlockchainResponse.error(ex.getMessage());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+    }
+
+    @ExceptionHandler(DuplicateRecordException.class)
+    public ResponseEntity<BlockchainResponse<DuplicateCheckDto>> handleDuplicateRecordException(
+            DuplicateRecordException ex) {
+        logger.warn("Duplicate record detected: {}", ex.getMessage());
+
+        BlockchainResponse<DuplicateCheckDto> response = BlockchainResponse.error(ex.getMessage());
+        response.setData(ex.getDuplicateCheck());
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
     }
 
     @ExceptionHandler(BlockchainException.class)

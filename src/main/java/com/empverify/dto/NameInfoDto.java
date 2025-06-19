@@ -11,6 +11,12 @@ import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class NameInfoDto {
+    @JsonProperty("id")
+    private String id;
+
+    @JsonProperty("name")
+    private String name;
+
     @JsonProperty("full_name")
     @NotBlank(message = "Full name is required")
     private String fullName;

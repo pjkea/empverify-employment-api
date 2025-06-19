@@ -10,6 +10,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Service
 public class EmploymentRecordService {
 
@@ -17,11 +19,15 @@ public class EmploymentRecordService {
 
     private final FabricGatewayService fabricGatewayService;
     private final ObjectMapper objectMapper;
+    private final DuplicatePreventionService duplicatePreventionService;
 
     @Autowired
-    public EmploymentRecordService(FabricGatewayService fabricGatewayService, ObjectMapper objectMapper) {
+    public EmploymentRecordService(FabricGatewayService fabricGatewayService,
+                                   ObjectMapper objectMapper,
+                                   DuplicatePreventionService duplicatePreventionService) {
         this.fabricGatewayService = fabricGatewayService;
         this.objectMapper = objectMapper;
+        this.duplicatePreventionService = duplicatePreventionService;
     }
 
     public BlockchainResponse<String> initializeLedger() {
@@ -40,6 +46,30 @@ public class EmploymentRecordService {
         try {
             logger.info("Creating employment record for employer: {}", request.getEmployerId());
 
+            // Check for duplicates BEFORE creating the record
+            DuplicateCheckDto duplicateCheck = duplicatePreventionService.checkForDuplicates(
+                    request.getEmployeeName(),
+                    request.getEmployerId()
+            );
+
+            // Block creation if duplicate is found and should be blocked
+            if (duplicatePreventionService.shouldBlockDuplicate(duplicateCheck)) {
+                String errorMessage = String.format(
+                        "Duplicate record detected: %s. Employee already exists for this employer.",
+                        duplicateCheck.getMessage()
+                );
+
+                logger.warn("Blocking duplicate record creation: {}", errorMessage);
+                return BlockchainResponse.error(errorMessage);
+            }
+
+            // Log warning for similar matches that aren't blocked
+            if (duplicateCheck.getIsDuplicate() && !duplicatePreventionService.shouldBlockDuplicate(duplicateCheck)) {
+                logger.warn("Similar record detected but allowing creation: {} - {}",
+                        duplicateCheck.getMessage(), duplicateCheck.getExistingEmployeeIds());
+            }
+
+            // Proceed with record creation
             String recordJson = objectMapper.writeValueAsString(request);
             String result = fabricGatewayService.submitTransaction("createRecord", recordJson);
 
@@ -47,7 +77,14 @@ public class EmploymentRecordService {
             EmploymentRecordResponse response = objectMapper.readValue(result, EmploymentRecordResponse.class);
 
             logger.info("Successfully created employment record with ID: {}", response.getEmployeeId());
-            return BlockchainResponse.success("Employment record created successfully", result);
+
+            // Include duplicate check info in success response if there were warnings
+            String successMessage = "Employment record created successfully";
+            if (duplicateCheck.getIsDuplicate()) {
+                successMessage += " (Warning: " + duplicateCheck.getMessage() + ")";
+            }
+
+            return BlockchainResponse.success(successMessage, result);
 
         } catch (JsonProcessingException e) {
             logger.error("Failed to serialize employment record request", e);
@@ -208,5 +245,39 @@ public class EmploymentRecordService {
 
     public boolean isBlockchainConnected() {
         return fabricGatewayService.isConnected();
+    }
+
+    /**
+     * Check for duplicates - exposed as a service method for testing/debugging
+     */
+    public BlockchainResponse<DuplicateCheckDto> checkForDuplicates(DuplicateCheckRequest request) {
+        try {
+            logger.info("Checking for duplicates: employee='{}', employer='{}'",
+                    request.getEmployeeName().getFullName(), request.getEmployerId());
+
+            DuplicateCheckDto duplicateCheck = duplicatePreventionService.checkForDuplicates(request);
+
+            logger.info("Duplicate check completed: isDuplicate={}, message={}",
+                    duplicateCheck.getIsDuplicate(), duplicateCheck.getMessage());
+
+            return BlockchainResponse.success("Duplicate check completed", duplicateCheck);
+
+        } catch (Exception e) {
+            logger.error("Failed to check for duplicates", e);
+            return BlockchainResponse.error("Failed to check for duplicates: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Get duplicate prevention configuration
+     */
+    public BlockchainResponse<Map<String, Object>> getDuplicatePreventionConfig() {
+        try {
+            Map<String, Object> config = duplicatePreventionService.getConfigurationInfo();
+            return BlockchainResponse.success("Duplicate prevention configuration retrieved", config);
+        } catch (Exception e) {
+            logger.error("Failed to get duplicate prevention configuration", e);
+            return BlockchainResponse.error("Failed to get configuration: " + e.getMessage());
+        }
     }
 }
