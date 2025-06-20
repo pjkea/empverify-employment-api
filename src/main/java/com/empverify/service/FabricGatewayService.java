@@ -7,17 +7,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
-import java.io.IOException;
-import java.nio.file.Files;
+import jakarta.servlet.http.HttpServletRequest;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.security.InvalidKeyException;
-import java.security.PrivateKey;
-import java.security.cert.CertificateException;
-import java.security.cert.X509Certificate;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -26,115 +24,114 @@ public class FabricGatewayService {
     private static final Logger logger = LoggerFactory.getLogger(FabricGatewayService.class);
 
     private final FabricNetworkConfig config;
-    private Gateway gateway;
-    private Network network;
-    private Contract contract;
+    private final IdentityManagerService identityManager;
+
+    // Cache of gateways per API key to avoid recreating connections
+    private final ConcurrentHashMap<String, Gateway> gatewayCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Network> networkCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Contract> contractCache = new ConcurrentHashMap<>();
 
     @Autowired
-    public FabricGatewayService(FabricNetworkConfig config) {
+    public FabricGatewayService(FabricNetworkConfig config, IdentityManagerService identityManager) {
         this.config = config;
+        this.identityManager = identityManager;
     }
 
     @PostConstruct
-    public void initializeGateway() {
-        try {
-            logger.info("Initializing Fabric Gateway with base path: {}", config.basePath());
-
-            // Load connection profile
-            Path connectionProfilePath = Paths.get(config.getFullConnectionProfilePath());
-            if (!Files.exists(connectionProfilePath)) {
-                throw new BlockchainException("Connection profile not found at: " + connectionProfilePath);
-            }
-
-            // Load wallet and identity
-            Wallet wallet = createWallet();
-            Identity identity = loadOrCreateIdentity(wallet);
-
-            // Create gateway
-            Gateway.Builder builder = Gateway.createBuilder()
-                    .identity(wallet, config.userName())
-                    .networkConfig(connectionProfilePath)
-                    .discovery(true);
-
-            this.gateway = builder.connect();
-            this.network = gateway.getNetwork(config.channelName());
-            this.contract = network.getContract(config.contractName());
-
-            logger.info("Successfully initialized Fabric Gateway for channel: {} and contract: {}",
-                    config.channelName(), config.contractName());
-
-        } catch (Exception e) {
-            logger.error("Failed to initialize Fabric Gateway", e);
-            throw new BlockchainException("Failed to initialize Fabric Gateway: " + e.getMessage(), e);
-        }
+    public void initializeService() {
+        logger.info("Enhanced Fabric Gateway Service initialized");
+        logger.info("Channel: {}, Contract: {}", config.channelName(), config.contractName());
     }
 
-    private Wallet createWallet() throws IOException {
-        Path walletPath = Paths.get(config.getFullWalletPath());
-        return Wallets.newFileSystemWallet(walletPath);
-    }
+    /**
+     * Get gateway for current API key context
+     */
+    private Gateway getGatewayForCurrentContext() {
+        String apiKey = getCurrentApiKey();
 
-    private Identity loadOrCreateIdentity(Wallet wallet) throws Exception {
-        // Check if identity already exists in wallet
-        if (wallet.get(config.userName()) != null) {
-            logger.info("Identity {} already exists in wallet", config.userName());
-            return wallet.get(config.userName());
-        }
-
-        // Load certificate and private key
-        X509Certificate certificate = loadCertificate();
-        PrivateKey privateKey = loadPrivateKey();
-
-        // Create identity
-        Identity identity = Identities.newX509Identity(config.mspId(), certificate, privateKey);
-        wallet.put(config.userName(), identity);
-
-        logger.info("Created and stored identity {} in wallet", config.userName());
-        return identity;
-    }
-
-    private X509Certificate loadCertificate() throws CertificateException, IOException {
-        Path certPath = Paths.get(config.getFullCertPath());
-        if (!Files.exists(certPath)) {
-            throw new BlockchainException("Certificate not found at: " + certPath);
-        }
-
-        byte[] certPEM = Files.readAllBytes(certPath);
-        return Identities.readX509Certificate(new String(certPEM));
-    }
-
-    private PrivateKey loadPrivateKey() throws IOException, InvalidKeyException {
-        Path privateKeyPath = Paths.get(config.getFullPrivateKeyPath());
-
-        // Handle directory with multiple key files
-        if (Files.isDirectory(privateKeyPath)) {
+        return gatewayCache.computeIfAbsent(apiKey, key -> {
             try {
-                final Path searchPath = privateKeyPath;
-                privateKeyPath = Files.list(privateKeyPath)
-                        .filter(path -> path.toString().endsWith("_sk"))
-                        .findFirst()
-                        .orElseThrow(() -> new BlockchainException("No private key file found in directory: " + searchPath));
-            } catch (IOException e) {
-                throw new BlockchainException("Error reading private key directory: " + privateKeyPath, e);
+                logger.debug("Creating new gateway connection for API key: {}", maskApiKey(key));
+
+                Identity identity = identityManager.getIdentityForApiKey(key);
+                String username = identityManager.getUsernameForApiKey(key);
+
+                Path connectionProfilePath = Paths.get(config.getFullConnectionProfilePath());
+
+                Gateway gateway = Gateway.createBuilder()
+                        .identity(identity)
+                        .networkConfig(connectionProfilePath)
+                        .discovery(true)
+                        .connect();
+
+                logger.info("Created gateway connection for user: {} (API key: {})", username, maskApiKey(key));
+                return gateway;
+
+            } catch (Exception e) {
+                logger.error("Failed to create gateway for API key: {}", maskApiKey(key), e);
+                throw new BlockchainException("Failed to create gateway connection", e);
             }
-        }
-
-        if (!Files.exists(privateKeyPath)) {
-            throw new BlockchainException("Private key not found at: " + privateKeyPath);
-        }
-
-        byte[] privateKeyPEM = Files.readAllBytes(privateKeyPath);
-        return Identities.readPrivateKey(new String(privateKeyPEM));
+        });
     }
 
+    /**
+     * Get network for current API key context
+     */
+    private Network getNetworkForCurrentContext() {
+        String apiKey = getCurrentApiKey();
+
+        return networkCache.computeIfAbsent(apiKey, key -> {
+            try {
+                Gateway gateway = getGatewayForCurrentContext();
+                Network network = gateway.getNetwork(config.channelName());
+
+                logger.debug("Retrieved network for channel: {} (API key: {})", config.channelName(), maskApiKey(key));
+                return network;
+
+            } catch (Exception e) {
+                logger.error("Failed to get network for API key: {}", maskApiKey(key), e);
+                throw new BlockchainException("Failed to get network", e);
+            }
+        });
+    }
+
+    /**
+     * Get contract for current API key context
+     */
+    private Contract getContractForCurrentContext() {
+        String apiKey = getCurrentApiKey();
+
+        return contractCache.computeIfAbsent(apiKey, key -> {
+            try {
+                Network network = getNetworkForCurrentContext();
+                Contract contract = network.getContract(config.contractName());
+
+                logger.debug("Retrieved contract: {} (API key: {})", config.contractName(), maskApiKey(key));
+                return contract;
+
+            } catch (Exception e) {
+                logger.error("Failed to get contract for API key: {}", maskApiKey(key), e);
+                throw new BlockchainException("Failed to get contract", e);
+            }
+        });
+    }
+
+    /**
+     * Submit transaction using identity based on API key
+     */
     public String submitTransaction(String functionName, String... args) {
         try {
-            logger.debug("Submitting transaction: {} with args: {}", functionName, String.join(", ", args));
+            String apiKey = getCurrentApiKey();
+            String username = identityManager.getUsernameForApiKey(apiKey);
 
+            logger.debug("Submitting transaction: {} as user: {} (API key: {})",
+                    functionName, username, maskApiKey(apiKey));
+
+            Contract contract = getContractForCurrentContext();
             byte[] result = contract.submitTransaction(functionName, args);
             String response = new String(result);
 
-            logger.debug("Transaction submitted successfully: {}", functionName);
+            logger.debug("Transaction submitted successfully: {} by user: {}", functionName, username);
             return response;
 
         } catch (Exception e) {
@@ -143,14 +140,22 @@ public class FabricGatewayService {
         }
     }
 
+    /**
+     * Evaluate transaction using identity based on API key
+     */
     public String evaluateTransaction(String functionName, String... args) {
         try {
-            logger.debug("Evaluating transaction: {} with args: {}", functionName, String.join(", ", args));
+            String apiKey = getCurrentApiKey();
+            String username = identityManager.getUsernameForApiKey(apiKey);
 
+            logger.debug("Evaluating transaction: {} as user: {} (API key: {})",
+                    functionName, username, maskApiKey(apiKey));
+
+            Contract contract = getContractForCurrentContext();
             byte[] result = contract.evaluateTransaction(functionName, args);
             String response = new String(result);
 
-            logger.debug("Transaction evaluated successfully: {}", functionName);
+            logger.debug("Transaction evaluated successfully: {} by user: {}", functionName, username);
             return response;
 
         } catch (Exception e) {
@@ -159,19 +164,144 @@ public class FabricGatewayService {
         }
     }
 
+    /**
+     * Get current API key from request context
+     */
+    private String getCurrentApiKey() {
+        try {
+            ServletRequestAttributes requestAttributes = (ServletRequestAttributes) RequestContextHolder.currentRequestAttributes();
+            HttpServletRequest request = requestAttributes.getRequest();
+            String apiKey = request.getHeader("X-API-Key");
+
+            if (apiKey == null || apiKey.trim().isEmpty()) {
+                throw new IllegalArgumentException("No API key found in request headers");
+            }
+
+            if (!identityManager.isValidApiKey(apiKey)) {
+                throw new IllegalArgumentException("Invalid API key: " + maskApiKey(apiKey));
+            }
+
+            return apiKey;
+
+        } catch (IllegalStateException e) {
+            logger.error("No request context available - cannot determine API key");
+            throw new BlockchainException("No request context available", e);
+        }
+    }
+
+    /**
+     * Check if service is connected (checks if any gateway exists)
+     */
     public boolean isConnected() {
-        return gateway != null && network != null && contract != null;
+        try {
+            String apiKey = getCurrentApiKey();
+            Gateway gateway = gatewayCache.get(apiKey);
+            return gateway != null;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Get current user information
+     */
+    public String getCurrentUsername() {
+        try {
+            String apiKey = getCurrentApiKey();
+            return identityManager.getUsernameForApiKey(apiKey);
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+
+    /**
+     * Get current user's organization
+     */
+    public String getCurrentUserOrganization() {
+        try {
+            String apiKey = getCurrentApiKey();
+            var userIdentity = identityManager.getUserInfoForApiKey(apiKey);
+            return userIdentity != null ? userIdentity.mspId() : "unknown";
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+
+    /**
+     * Get current user's role
+     */
+    public String getCurrentUserRole() {
+        try {
+            String apiKey = getCurrentApiKey();
+            var userIdentity = identityManager.getUserInfoForApiKey(apiKey);
+            return userIdentity != null ? userIdentity.role() : "unknown";
+        } catch (Exception e) {
+            return "unknown";
+        }
+    }
+
+    /**
+     * Mask API key for logging
+     */
+    private String maskApiKey(String apiKey) {
+        if (apiKey == null || apiKey.length() < 4) {
+            return "****";
+        }
+        return "****" + apiKey.substring(apiKey.length() - 4);
+    }
+
+    /**
+     * Get connection statistics
+     */
+    public java.util.Map<String, Object> getConnectionStatistics() {
+        java.util.Map<String, Object> stats = new java.util.HashMap<>();
+        stats.put("active_gateways", gatewayCache.size());
+        stats.put("active_networks", networkCache.size());
+        stats.put("active_contracts", contractCache.size());
+        stats.put("identity_cache_status", identityManager.getIdentityCacheStatus());
+        return stats;
+    }
+
+    /**
+     * Force refresh connection for API key
+     */
+    public void refreshConnection(String apiKey) {
+        logger.info("Refreshing connection for API key: {}", maskApiKey(apiKey));
+
+        // Close and remove cached connections
+        Gateway gateway = gatewayCache.remove(apiKey);
+        if (gateway != null) {
+            try {
+                gateway.close();
+            } catch (Exception e) {
+                logger.warn("Error closing gateway during refresh", e);
+            }
+        }
+
+        networkCache.remove(apiKey);
+        contractCache.remove(apiKey);
+
+        logger.info("Connection refreshed for API key: {}", maskApiKey(apiKey));
     }
 
     @PreDestroy
     public void cleanup() {
-        if (gateway != null) {
+        logger.info("Cleaning up Enhanced Fabric Gateway Service");
+
+        // Close all gateway connections
+        for (var entry : gatewayCache.entrySet()) {
             try {
-                gateway.close();
-                logger.info("Fabric Gateway connection closed");
+                entry.getValue().close();
+                logger.debug("Closed gateway for API key: {}", maskApiKey(entry.getKey()));
             } catch (Exception e) {
-                logger.warn("Error closing Fabric Gateway", e);
+                logger.warn("Error closing gateway for API key: {}", maskApiKey(entry.getKey()), e);
             }
         }
+
+        gatewayCache.clear();
+        networkCache.clear();
+        contractCache.clear();
+
+        logger.info("Enhanced Fabric Gateway Service cleanup completed");
     }
 }
