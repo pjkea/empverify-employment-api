@@ -407,3 +407,6 @@ Caused by: com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException: Unr
 2025-06-17 23:16:19 - Successfully retrieved employee counter
 2025-06-17 23:16:22 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
 2025-06-17 23:16:36 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 23:17:36 - Failed to export metrics. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317
+2025-06-17 23:17:39 - Channel employeechannel doing discovery with peer: Peer{ id: 5, name: peer0.org1.agregartech.com:7051, channelName: employeechannel, url: grpcs://peer0.org1.agregartech.com:7051, mspid: Org1MSP}
+2025-06-17 23:17:42 - Failed to export spans. Server responded with gRPC status code 2. Error message: Failed to connect to localhost/[0:0:0:0:0:0:0:1]:4317

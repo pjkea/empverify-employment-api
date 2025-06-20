@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-class TenureDto {
+public class TenureDto {
     @JsonProperty("start_date")
     private String startDate;
 
