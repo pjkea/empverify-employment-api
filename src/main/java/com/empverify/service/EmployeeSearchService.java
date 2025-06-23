@@ -62,6 +62,11 @@ public class EmployeeSearchService {
      * Execute search based on available criteria - determines optimal search strategy
      */
     private SearchResponse executeSearch(SearchRequest request) {
+        // Strategy 1: National ID + Employer (highest precision)
+        if (hasValue(request.getNationalId()) && hasValue(request.getEmployerId())) {
+            return searchByNationalIdAndEmployer(request);
+        }
+
         // Strategy 2: Composite key (Name + Employer + Dates) - most precise for name-based searches
         if (hasValue(request.getEmployeeName()) && hasValue(request.getEmployerId())
                 && hasValue(request.getEmploymentStartDate())) {
@@ -100,6 +105,7 @@ public class EmployeeSearchService {
         List<EmploymentRecordDto> allRecords = getAllEmploymentRecords();
 
         List<SearchResult> results = allRecords.stream()
+                .filter(record -> matchesNationalId(record, request.getNationalId()))
                 .filter(record -> matchesEmployer(record, request.getEmployerId()))
                 .map(record -> SearchResult.fromEmploymentRecord(record, "exact", 1.0))
                 .collect(Collectors.toList());
@@ -288,6 +294,13 @@ public class EmployeeSearchService {
 
     // ==================== MATCHING LOGIC ====================
 
+    private boolean matchesNationalId(NameInfoDto record, String nationalId) {
+        if (nationalId == null || record.getNationalId() == null) {
+            return false;
+        }
+        return record.getNationalId().equalsIgnoreCase(nationalId);
+    }
+
     private boolean matchesEmployer(EmploymentRecordDto record, String employerId) {
         if (employerId == null || record.getEmployerId() == null) {
             return false;
@@ -303,12 +316,16 @@ public class EmployeeSearchService {
         String recordName = record.getEmployeeName().getFullName().toLowerCase().trim();
         String queryName = searchName.toLowerCase().trim();
 
-        return switch (matchType) {
-            case "exact" -> recordName.equals(queryName);
-            case "partial" -> recordName.contains(queryName) || queryName.contains(recordName);
-            case "fuzzy" -> calculateNameSimilarity(recordName, queryName) >= FUZZY_MATCH_THRESHOLD;
-            default -> recordName.contains(queryName);
-        };
+        switch (matchType) {
+            case "exact":
+                return recordName.equals(queryName);
+            case "partial":
+                return recordName.contains(queryName) || queryName.contains(recordName);
+            case "fuzzy":
+                return calculateNameSimilarity(recordName, queryName) >= FUZZY_MATCH_THRESHOLD;
+            default:
+                return recordName.contains(queryName);
+        }
     }
 
     private boolean matchesEmploymentDates(EmploymentRecordDto record, String startDate, String endDate) {
@@ -326,7 +343,9 @@ public class EmployeeSearchService {
 
         if (endDate != null && record.getTenure().getEndDate() != null) {
             String datePrefix = endDate.substring(0, Math.min(7, endDate.length()));
-            return record.getTenure().getEndDate().contains(datePrefix);
+            if (!record.getTenure().getEndDate().contains(datePrefix)) {
+                return false;
+            }
         }
 
         return true;
@@ -391,7 +410,7 @@ public class EmployeeSearchService {
             response.addSearchTip(noResultsTip);
             return response;
         } else if (results.size() == 1) {
-            return SearchResponse.singleResult(results.getFirst(), request);
+            return SearchResponse.singleResult(results.get(0), request);
         } else {
             return SearchResponse.multipleResults(results, request);
         }

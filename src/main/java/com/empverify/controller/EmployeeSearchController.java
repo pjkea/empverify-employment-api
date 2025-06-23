@@ -185,6 +185,42 @@ public class EmployeeSearchController {
         }
     }
 
+    @GetMapping("/by-national-id")
+    @Operation(summary = "Search by National ID",
+            description = "Most precise search using national ID/SSN + employer")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Search completed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid parameters"),
+            @ApiResponse(responseCode = "500", description = "Internal server error")
+    })
+    public ResponseEntity<BlockchainResponse<SearchResponse>> searchByNationalId(
+            @Parameter(description = "National ID/SSN (last 4 digits acceptable)", required = true)
+            @RequestParam String nationalId,
+
+            @Parameter(description = "Employer ID", required = true)
+            @RequestParam String employerId) {
+
+        logger.info("National ID search: nationalId='****{}', employer='{}'",
+                nationalId.length() >= 4 ? nationalId.substring(nationalId.length() - 4) : "****", employerId);
+
+        try {
+            SearchRequest searchRequest = SearchRequest.byNationalIdAndEmployer(nationalId, employerId);
+
+            SearchResponse searchResponse = employeeSearchService.searchEmployees(searchRequest);
+
+            String message = String.format("National ID search completed: %d result(s) found", searchResponse.getTotalResults());
+            BlockchainResponse<SearchResponse> response = BlockchainResponse.success(message, searchResponse);
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            logger.error("Error during national ID search", e);
+            BlockchainResponse<SearchResponse> errorResponse =
+                    BlockchainResponse.error("National ID search failed: " + e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorResponse);
+        }
+    }
+
     @GetMapping("/verification")
     @Operation(summary = "Employment Verification",
             description = "Verify employment history for background checks")

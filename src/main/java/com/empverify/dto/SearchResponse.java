@@ -3,8 +3,6 @@ package com.empverify.dto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -54,22 +52,22 @@ public class SearchResponse {
     public static SearchResponse noResults(SearchRequest query) {
         SearchResponse response = new SearchResponse();
         response.setTotalResults(0);
-        response.setResults(new ArrayList<>(Arrays.asList()));
+        response.setResults(List.of());
         response.setSearchQuery(query);
         response.setDisambiguationNeeded(false);
-        response.setSearchTips(new ArrayList<>(Arrays.asList(
+        response.setSearchTips(List.of(
                 "Try using partial name matches",
                 "Check employer name spelling",
                 "Expand date range if searching by employment period",
-                "Use composite key search for exact matches"
-        )));
+                "Use national ID for exact matches"
+        ));
         return response;
     }
 
     public static SearchResponse singleResult(SearchResult result, SearchRequest query) {
         SearchResponse response = new SearchResponse();
         response.setTotalResults(1);
-        response.setResults(new ArrayList<>(Arrays.asList(result)));
+        response.setResults(List.of(result));
         response.setSearchQuery(query);
         response.setDisambiguationNeeded(false);
         response.setSearchTypeUsed("exact");
@@ -85,11 +83,11 @@ public class SearchResponse {
         response.setSearchTypeUsed("partial");
 
         // Add disambiguation tips
-        response.setSearchTips(new ArrayList<>(Arrays.asList(
+        response.setSearchTips(List.of(
                 "Multiple matches found - use employment dates to narrow down",
                 "Consider department or job title filters",
-                "Use composite key search for exact identification"
-        )));
+                "Use national ID for exact identification"
+        ));
 
         return response;
     }
@@ -103,11 +101,11 @@ public class SearchResponse {
         response.setSearchTypeUsed("fuzzy");
         response.setSuggestions(suggestions);
 
-        response.setSearchTips(new ArrayList<>(Arrays.asList(
+        response.setSearchTips(List.of(
                 "Fuzzy matching used - results may not be exact",
                 "Check suggestions for alternative spellings",
                 "Use exact search for more precise results"
-        )));
+        ));
 
         return response;
     }

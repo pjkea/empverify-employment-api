@@ -30,6 +30,9 @@ public class NameInfoDto {
     @JsonProperty("last_name")
     private String lastName;
 
+    @JsonProperty("national_id")
+    private String nationalId;
+
     @JsonProperty("role")
     private String role;
 
@@ -48,6 +51,8 @@ public class NameInfoDto {
     public void setMiddleName(String middleName) { this.middleName = middleName; }
     public String getLastName() { return lastName; }
     public void setLastName(String lastName) { this.lastName = lastName; }
+    public String getNationalId() { return nationalId; }
+    public void setNationalId(String nationalId) { this.nationalId = nationalId; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
     public String getDepartment() { return department; }

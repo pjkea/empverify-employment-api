@@ -39,7 +39,8 @@ public class SearchResult {
     @JsonProperty("disambiguation_info")
     private DisambiguationInfo disambiguationInfo;
 
-
+    @JsonProperty("national_id_partial")
+    private String nationalIdPartial; // Last 4 digits for privacy
 
     @JsonProperty("eligible_for_rehire")
     private Boolean eligibleForRehire;
@@ -186,6 +187,14 @@ public class SearchResult {
 
     public void setDisambiguationInfo(DisambiguationInfo disambiguationInfo) {
         this.disambiguationInfo = disambiguationInfo;
+    }
+
+    public String getNationalIdPartial() {
+        return nationalIdPartial;
+    }
+
+    public void setNationalIdPartial(String nationalIdPartial) {
+        this.nationalIdPartial = nationalIdPartial;
     }
 
     public Boolean getEligibleForRehire() {

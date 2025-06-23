@@ -17,7 +17,8 @@ public class SearchRequest {
     @JsonProperty("employer_name")
     private String employerName;
 
-
+    @JsonProperty("national_id")
+    private String nationalId; // SSN/National ID for unique identification
 
     @JsonProperty("job_title")
     private String jobTitle;
@@ -57,6 +58,14 @@ public class SearchRequest {
         return request;
     }
 
+    public static SearchRequest byNationalIdAndEmployer(String nationalId, String employerId) {
+        SearchRequest request = new SearchRequest();
+        request.setNationalId(nationalId);
+        request.setEmployerId(employerId);
+        request.setSearchType("exact");
+        return request;
+    }
+
     public static SearchRequest byCompositeKey(String employeeName, String employerId, String startDate, String endDate) {
         SearchRequest request = new SearchRequest();
         request.setEmployeeName(employeeName);
@@ -90,6 +99,14 @@ public class SearchRequest {
 
     public void setEmployerName(String employerName) {
         this.employerName = employerName;
+    }
+
+    public String getNationalId() {
+        return nationalId;
+    }
+
+    public void setNationalId(String nationalId) {
+        this.nationalId = nationalId;
     }
 
     public String getJobTitle() {
