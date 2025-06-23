@@ -88,6 +88,28 @@ public class SearchResult {
         return result;
     }
 
+    public static SearchResult fromEmploymentRecordWithNationalId(EmploymentRecordDto record, String matchType, Double matchScore) {
+        // Create base SearchResult using existing method
+        SearchResult result = fromEmploymentRecord(record, matchType, matchScore);
+
+        // Add partial national ID for privacy (accessing through correct path)
+        if (record.getEmployeeName() != null &&
+                record.getEmployeeName().getNationalId() != null &&
+                !record.getEmployeeName().getNationalId().trim().isEmpty()) {
+
+            String nationalId = record.getEmployeeName().getNationalId().trim();
+
+            if (nationalId.length() >= 4) {
+                result.setNationalIdPartial("****" + nationalId.substring(nationalId.length() - 4));
+            } else {
+                result.setNationalIdPartial("****");
+            }
+        }
+
+        return result;
+    }
+
+
     // Helper method to format employment period
     private static String formatEmploymentPeriod(String startDate, String endDate) {
         if (startDate == null && endDate == null) {

@@ -107,10 +107,27 @@ public class EmployeeSearchService {
         List<SearchResult> results = allRecords.stream()
                 .filter(record -> matchesNationalId(record, request.getNationalId()))
                 .filter(record -> matchesEmployer(record, request.getEmployerId()))
-                .map(record -> SearchResult.fromEmploymentRecord(record, "exact", 1.0))
+                .map(record -> SearchResult.fromEmploymentRecordWithNationalId(record, "exact", 1.0))
                 .collect(Collectors.toList());
 
-        return buildSearchResponse(results, request, "Try checking National ID format or employer ID");
+        logger.info("National ID search found {} matching records", results.size());
+
+        if (results.isEmpty()) {
+            SearchResponse response = SearchResponse.noResults(request);
+            response.addSearchTip("Try checking National ID format (GHA-XXXXXXXXX-X) or use last 4 digits");
+            response.addSearchTip("Verify employer ID is correct");
+            return response;
+        } else if (results.size() == 1) {
+            SearchResponse response = SearchResponse.singleResult(results.get(0), request);
+            response.setSearchTypeUsed("exact");
+            return response;
+        } else {
+            // Multiple matches for same national ID + employer (unusual case)
+            SearchResponse response = SearchResponse.multipleResults(results, request);
+            response.addSearchTip("Multiple records found for same National ID - contact administrator");
+            response.setSearchTypeUsed("exact");
+            return response;
+        }
     }
 
     /**
@@ -128,7 +145,18 @@ public class EmployeeSearchService {
                 .map(record -> SearchResult.fromEmploymentRecord(record, "exact", 1.0))
                 .collect(Collectors.toList());
 
-        return buildSearchResponse(results, request, "Try relaxing date criteria or check spelling");
+        logger.info("Composite key search found {} matching records", results.size());
+
+        if (results.isEmpty()) {
+            SearchResponse response = SearchResponse.noResults(request);
+            response.addSearchTip("Try relaxing date criteria or check name spelling");
+            response.addSearchTip("Ensure employment dates are in YYYY-MM-DD format");
+            return response;
+        } else if (results.size() == 1) {
+            return SearchResponse.singleResult(results.get(0), request);
+        } else {
+            return SearchResponse.multipleResults(results, request);
+        }
     }
 
     /**
@@ -294,11 +322,81 @@ public class EmployeeSearchService {
 
     // ==================== MATCHING LOGIC ====================
 
-    private boolean matchesNationalId(NameInfoDto record, String nationalId) {
-        if (nationalId == null || record.getNationalId() == null) {
+    /**
+     * Check if record matches the provided national ID
+     * Supports exact match, partial match (last 4 digits), and format variations
+     */
+    private boolean matchesNationalId(EmploymentRecordDto record, String searchNationalId) {
+        // Validate inputs
+        if (searchNationalId == null || searchNationalId.trim().isEmpty()) {
+            logger.debug("Search national ID is null or empty");
             return false;
         }
-        return record.getNationalId().equalsIgnoreCase(nationalId);
+
+        // Check if record has employee name
+        if (record.getEmployeeName() == null) {
+            logger.debug("Record has no employee name information");
+            return false;
+        }
+
+        // Check if employee name has national ID
+        if (record.getEmployeeName().getNationalId() == null ||
+                record.getEmployeeName().getNationalId().trim().isEmpty()) {
+            logger.debug("Record has no national ID information");
+            return false;
+        }
+
+        // Get the national ID from the correct path: EmploymentRecordDto -> NameInfoDto -> nationalId
+        String recordNationalId = record.getEmployeeName().getNationalId().trim();
+        String cleanSearchId = searchNationalId.trim();
+
+        logger.debug("Comparing national IDs: record='{}', search='{}'",
+                maskNationalId(recordNationalId), maskNationalId(cleanSearchId));
+
+        // 1. Exact match (case insensitive)
+        if (recordNationalId.equalsIgnoreCase(cleanSearchId)) {
+            logger.debug("Exact national ID match found");
+            return true;
+        }
+
+        // 2. Last 4 digits match (for privacy-friendly searches)
+        if (cleanSearchId.length() == 4 && recordNationalId.length() >= 4) {
+            String recordLast4 = recordNationalId.substring(recordNationalId.length() - 4);
+            if (recordLast4.equals(cleanSearchId)) {
+                logger.debug("Last 4 digits national ID match found");
+                return true;
+            }
+        }
+
+        // 3. Ghana format matching: GHA-XXXXXXXXX-X
+        if (cleanSearchId.toUpperCase().startsWith("GHA-") &&
+                recordNationalId.toUpperCase().startsWith("GHA-")) {
+            if (recordNationalId.equalsIgnoreCase(cleanSearchId)) {
+                logger.debug("Ghana format national ID match found");
+                return true;
+            }
+        }
+
+        // 4. Numeric-only comparison (remove all non-digits)
+        String recordNumeric = recordNationalId.replaceAll("[^0-9]", "");
+        String searchNumeric = cleanSearchId.replaceAll("[^0-9]", "");
+
+        if (!recordNumeric.isEmpty() && !searchNumeric.isEmpty()) {
+            // Full numeric match
+            if (recordNumeric.equals(searchNumeric)) {
+                logger.debug("Numeric national ID match found");
+                return true;
+            }
+
+            // Partial numeric match (search term is suffix of record)
+            if (searchNumeric.length() >= 4 && recordNumeric.endsWith(searchNumeric)) {
+                logger.debug("Partial numeric national ID match found");
+                return true;
+            }
+        }
+
+        logger.debug("No national ID match found");
+        return false;
     }
 
     private boolean matchesEmployer(EmploymentRecordDto record, String employerId) {
@@ -431,6 +529,13 @@ public class EmployeeSearchService {
                 record.getEmployeeName().getFullName().toLowerCase(),
                 searchName.toLowerCase()
         );
+    }
+
+    private String maskNationalId(String nationalId) {
+        if (nationalId == null || nationalId.length() < 4) {
+            return "****";
+        }
+        return "****" + nationalId.substring(nationalId.length() - 4);
     }
 
     private double calculateNameSimilarity(String name1, String name2) {
