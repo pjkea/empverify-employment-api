@@ -118,7 +118,7 @@ public class EmployeeSearchService {
             response.addSearchTip("Verify employer ID is correct");
             return response;
         } else if (results.size() == 1) {
-            SearchResponse response = SearchResponse.singleResult(results.get(0), request);
+            SearchResponse response = SearchResponse.singleResult(results.getFirst(), request);
             response.setSearchTypeUsed("exact");
             return response;
         } else {
@@ -153,7 +153,7 @@ public class EmployeeSearchService {
             response.addSearchTip("Ensure employment dates are in YYYY-MM-DD format");
             return response;
         } else if (results.size() == 1) {
-            return SearchResponse.singleResult(results.get(0), request);
+            return SearchResponse.singleResult(results.getFirst(), request);
         } else {
             return SearchResponse.multipleResults(results, request);
         }
@@ -414,16 +414,12 @@ public class EmployeeSearchService {
         String recordName = record.getEmployeeName().getFullName().toLowerCase().trim();
         String queryName = searchName.toLowerCase().trim();
 
-        switch (matchType) {
-            case "exact":
-                return recordName.equals(queryName);
-            case "partial":
-                return recordName.contains(queryName) || queryName.contains(recordName);
-            case "fuzzy":
-                return calculateNameSimilarity(recordName, queryName) >= FUZZY_MATCH_THRESHOLD;
-            default:
-                return recordName.contains(queryName);
-        }
+        return switch (matchType) {
+            case "exact" -> recordName.equals(queryName);
+            case "partial" -> recordName.contains(queryName) || queryName.contains(recordName);
+            case "fuzzy" -> calculateNameSimilarity(recordName, queryName) >= FUZZY_MATCH_THRESHOLD;
+            default -> recordName.contains(queryName);
+        };
     }
 
     private boolean matchesEmploymentDates(EmploymentRecordDto record, String startDate, String endDate) {
@@ -441,9 +437,7 @@ public class EmployeeSearchService {
 
         if (endDate != null && record.getTenure().getEndDate() != null) {
             String datePrefix = endDate.substring(0, Math.min(7, endDate.length()));
-            if (!record.getTenure().getEndDate().contains(datePrefix)) {
-                return false;
-            }
+            return record.getTenure().getEndDate().contains(datePrefix);
         }
 
         return true;
@@ -502,13 +496,13 @@ public class EmployeeSearchService {
 
     // ==================== UTILITY METHODS ====================
 
-    private SearchResponse buildSearchResponse(List<SearchResult> results, SearchRequest request, String noResultsTip) {
+    private SearchResponse buildSearchResponse(List<SearchResult> results, SearchRequest request, @SuppressWarnings("SameParameterValue") String noResultsTip) {
         if (results.isEmpty()) {
             SearchResponse response = SearchResponse.noResults(request);
             response.addSearchTip(noResultsTip);
             return response;
         } else if (results.size() == 1) {
-            return SearchResponse.singleResult(results.get(0), request);
+            return SearchResponse.singleResult(results.getFirst(), request);
         } else {
             return SearchResponse.multipleResults(results, request);
         }
