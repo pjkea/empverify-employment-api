@@ -20,15 +20,120 @@ public class EmploymentRecordService {
     private final FabricGatewayService fabricGatewayService;
     private final ObjectMapper objectMapper;
     private final DuplicatePreventionService duplicatePreventionService;
+    private final EmployeeSearchService employeeSearchService;
 
     @Autowired
     public EmploymentRecordService(FabricGatewayService fabricGatewayService,
                                    ObjectMapper objectMapper,
-                                   DuplicatePreventionService duplicatePreventionService) {
+                                   DuplicatePreventionService duplicatePreventionService,
+                                   EmployeeSearchService employeeSearchService) {
         this.fabricGatewayService = fabricGatewayService;
         this.objectMapper = objectMapper;
         this.duplicatePreventionService = duplicatePreventionService;
+        this.employeeSearchService = employeeSearchService;
     }
+
+    // ========================
+    // NATURAL IDENTIFIER RESOLUTION
+    // ========================
+
+    /**
+     * Resolve National ID + Employer ID to actual Employee ID
+     * This is the core method that all "by-identifiers" endpoints use
+     */
+    public String resolveEmployeeId(String nationalId, String employerId) {
+        logger.debug("Resolving employee ID for nationalId='{}', employerId='{}'",
+                maskNationalId(nationalId), employerId);
+
+        try {
+            // Create search request using national ID and employer ID
+            SearchRequest searchRequest = SearchRequest.byNationalIdAndEmployer(nationalId, employerId);
+            SearchResponse searchResponse = employeeSearchService.searchEmployees(searchRequest);
+
+            if (searchResponse.getTotalResults() == 0) {
+                throw new EmployeeRecordNotFoundException(
+                        String.format("No employment record found for nationalId='%s' and employerId='%s'",
+                                maskNationalId(nationalId), employerId));
+            }
+
+            if (searchResponse.getTotalResults() > 1) {
+                logger.warn("Multiple records found for nationalId + employerId combination: nationalId='{}', employerId='{}', count={}",
+                        maskNationalId(nationalId), employerId, searchResponse.getTotalResults());
+
+                // For now, return the first one, but in production you might want to handle this differently
+                // This shouldn't happen if your business logic is correct (one person per employer)
+                logger.warn("Using first result from {} matches", searchResponse.getTotalResults());
+            }
+
+            String resolvedEmployeeId = searchResponse.getResults().get(0).getEmployeeId();
+            logger.debug("Successfully resolved to employee ID: {}", resolvedEmployeeId);
+
+            return resolvedEmployeeId;
+
+        } catch (EmployeeRecordNotFoundException e) {
+            // Re-throw as-is
+            throw e;
+        } catch (Exception e) {
+            logger.error("Error resolving employee ID for nationalId='{}', employerId='{}'",
+                    maskNationalId(nationalId), employerId, e);
+            throw new RuntimeException("Failed to resolve employee ID: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Smart upsert: Create new record or update existing based on natural identifiers
+     */
+    public EmploymentRecordUpsertResponse smartUpsertEmploymentRecord(EmploymentRecordRequest request) {
+        logger.info("Smart upsert for nationalId='{}', employerId='{}'",
+                maskNationalId(request.getEmployeeName().getNationalId()), request.getEmployerId());
+
+        try {
+            // Try to find existing record
+            String nationalId = request.getEmployeeName().getNationalId();
+            String employerId = request.getEmployerId();
+
+            try {
+                String existingEmployeeId = resolveEmployeeId(nationalId, employerId);
+
+                // Record exists - update it
+                logger.info("Found existing record for nationalId='{}', employerId='{}' -> employeeId='{}'",
+                        maskNationalId(nationalId), employerId, existingEmployeeId);
+
+                // Convert request to update request
+                EmploymentRecordUpdateRequest updateRequest = convertToUpdateRequest(request);
+                BlockchainResponse<String> updateResponse = updateEmploymentRecord(existingEmployeeId, updateRequest);
+
+                if (!updateResponse.isSuccess()) {
+                    throw new RuntimeException("Failed to update existing record: " + updateResponse.getError());
+                }
+
+                return new EmploymentRecordUpsertResponse(existingEmployeeId, true, updateResponse.getMessage());
+
+            } catch (EmployeeRecordNotFoundException e) {
+                // Record doesn't exist - create new one
+                logger.info("No existing record found for nationalId='{}', employerId='{}' - creating new record",
+                        maskNationalId(nationalId), employerId);
+
+                BlockchainResponse<String> createResponse = createEmploymentRecord(request);
+
+                if (!createResponse.isSuccess()) {
+                    throw new RuntimeException("Failed to create new record: " + createResponse.getError());
+                }
+
+                // Extract employee ID from create response
+                String newEmployeeId = extractEmployeeIdFromResponse(createResponse.getData());
+                return new EmploymentRecordUpsertResponse(newEmployeeId, false, createResponse.getMessage());
+            }
+
+        } catch (Exception e) {
+            logger.error("Error in smart upsert", e);
+            throw new RuntimeException("Smart upsert failed: " + e.getMessage(), e);
+        }
+    }
+
+    // ========================
+    // EXISTING METHODS (Keep unchanged)
+    // ========================
 
     public BlockchainResponse<String> initializeLedger() {
         try {
@@ -279,5 +384,65 @@ public class EmploymentRecordService {
             logger.error("Failed to get duplicate prevention configuration", e);
             return BlockchainResponse.error("Failed to get configuration: " + e.getMessage());
         }
+    }
+
+    // ========================
+    // UTILITY METHODS
+    // ========================
+
+    /**
+     * Convert EmploymentRecordRequest to EmploymentRecordUpdateRequest
+     */
+    private EmploymentRecordUpdateRequest convertToUpdateRequest(EmploymentRecordRequest request) {
+        EmploymentRecordUpdateRequest updateRequest = new EmploymentRecordUpdateRequest();
+
+        // Copy relevant fields
+        updateRequest.setJobTitle(request.getJobTitle());
+        updateRequest.setTenure(request.getTenure());
+        updateRequest.setPerformanceRating(request.getPerformanceRating());
+        updateRequest.setDepartureReason(request.getDepartureReason());
+        updateRequest.setEligibleForRehire(request.getEligibleForRehire());
+        updateRequest.setVerifierId(request.getVerifierId());
+        updateRequest.setVerifierName(request.getVerifierName());
+        updateRequest.setMetadata(request.getMetadata());
+
+        return updateRequest;
+    }
+
+    /**
+     * Extract employee ID from blockchain response
+     */
+    private String extractEmployeeIdFromResponse(String responseData) {
+        try {
+            // Try to parse as EmploymentRecordResponse first
+            EmploymentRecordResponse response = objectMapper.readValue(responseData, EmploymentRecordResponse.class);
+            if (response.getEmployeeId() != null) {
+                return response.getEmployeeId();
+            }
+        } catch (Exception e) {
+            logger.debug("Could not parse as EmploymentRecordResponse, trying alternative parsing");
+        }
+
+        try {
+            // Try to extract from JSON directly
+            com.fasterxml.jackson.databind.JsonNode jsonNode = objectMapper.readTree(responseData);
+            if (jsonNode.has("employee_id")) {
+                return jsonNode.get("employee_id").asText();
+            }
+        } catch (Exception e) {
+            logger.warn("Could not extract employee ID from response: {}", responseData);
+        }
+
+        throw new RuntimeException("Could not extract employee ID from blockchain response");
+    }
+
+    /**
+     * Mask National ID for logging (show only last 4 characters)
+     */
+    private String maskNationalId(String nationalId) {
+        if (nationalId == null || nationalId.length() < 4) {
+            return "****";
+        }
+        return "****" + nationalId.substring(nationalId.length() - 4);
     }
 }

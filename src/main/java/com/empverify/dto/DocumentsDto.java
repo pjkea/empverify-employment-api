@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-class DocumentsDto {
+public class DocumentsDto {
     @JsonProperty("employment_contract")
     private DocumentDto employmentContract;
 

@@ -10,7 +10,7 @@ import java.util.List;
 import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-class DocumentDto {
+public class DocumentDto {
     @JsonProperty("s3_bucket")
     private String s3Bucket;
 
