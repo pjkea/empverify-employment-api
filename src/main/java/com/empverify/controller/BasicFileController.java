@@ -4,6 +4,7 @@ import com.empverify.dto.BlockchainResponse;
 import com.empverify.dto.DocumentCollectionDto;
 import com.empverify.dto.DocumentRequest;
 import com.empverify.service.BasicFileService;
+import com.empverify.service.DocumentExtractionHelper;
 import com.empverify.service.EmploymentRecordService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -155,39 +156,11 @@ public class BasicFileController {
      * Extract S3 key from document collection based on document type
      * This is a simple implementation - you might need to enhance based on your document structure
      */
+    @Autowired
+    private DocumentExtractionHelper extractionHelper;
+
     private String extractS3Key(DocumentCollectionDto documents, String documentType) {
-        if (documents == null || documents.getDocuments() == null) {
-            return null;
-        }
-
-        // This is a simplified extraction - you'll need to adapt based on your actual DocumentsDto structure
-        // For now, we'll assume the documents DTO has getter methods for different document types
-
-        try {
-            // You'll need to implement this based on your actual DocumentsDto structure
-            // This is just a placeholder - adapt to your actual implementation
-            switch (documentType.toLowerCase()) {
-                case "employment_contract":
-                    // return documents.getDocuments().getEmploymentContract().getS3Key();
-                    break;
-                case "resignation_letter":
-                    // return documents.getDocuments().getResignationLetter().getS3Key();
-                    break;
-                case "performance_review":
-                    // Handle array of performance reviews
-                    break;
-                default:
-                    logger.warn("Unknown document type: {}", documentType);
-                    return null;
-            }
-        } catch (Exception e) {
-            logger.error("Error extracting S3 key for document type: {}", documentType, e);
-            return null;
-        }
-
-        // TODO: Implement actual extraction logic based on your DocumentsDto structure
-        logger.warn("S3 key extraction not implemented for document type: {}", documentType);
-        return null;
+        return extractionHelper.extractS3Key(documents, documentType);
     }
 
     /**
